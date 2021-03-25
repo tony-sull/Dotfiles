@@ -14,14 +14,14 @@
 # Any items in the `env` entry below will be added as
 # environment variables. Some entries may override variables
 # set by alacritty itself.
-env:
+#env:
   # TERM variable
   #
   # This value is used to set the `$TERM` environment variable for
   # each instance of Alacritty. If it is not present, alacritty will
   # check the local terminfo database and use `alacritty` if it is
   # available, otherwise `xterm-256color` is used.
-  TERM: alacritty
+  #TERM: alacritty
 
 window:
   # Window dimensions (changes require restart)
@@ -47,10 +47,10 @@ window:
   # by DPI and the specified value is always added at both opposing sides.
   padding:
     x: 0
-    y: 1
+    y: 0
 
   # Spread additional padding evenly around the terminal content.
-  #dynamic_padding: false
+  dynamic_padding: true
 
   # Window decorations
   #
@@ -61,7 +61,7 @@ window:
   # Values for `decorations` (macOS only):
   #     - transparent: Title bar, transparent background and title bar buttons
   #     - buttonless: Title bar, transparent background and no title bar buttons
-  #decorations: full
+  decorations: none
 
   # Startup Mode (changes require restart)
   #
@@ -75,17 +75,17 @@ window:
   #startup_mode: Windowed
 
   # Window title
-  title: Alacritty
+  #title: Alacritty
 
   # Allow terminal applications to change Alacritty's window title.
   #dynamic_title: true
 
   # Window class (Linux/BSD only):
-  class:
+  #class:
     # Application instance name
-    instance: Alacritty
+    #instance: Alacritty
     # General application class
-    general: Alacritty
+    #general: Alacritty
 
   # GTK theme variant (Linux/BSD only)
   #
@@ -96,10 +96,10 @@ window:
 scrolling:
   # Maximum number of lines in the scrollback buffer.
   # Specifying '0' will disable scrolling.
-  history: 5000
+  #history: 10000
 
   # Scrolling distance multiplier.
-  #multiplier: 3
+  multiplier: 1
 
 # Font configuration
 font:
@@ -111,10 +111,10 @@ font:
     #   - (macOS) Menlo
     #   - (Linux/BSD) monospace
     #   - (Windows) Consolas
-    family: SauceCodePro Nerd Font
+    family: monospace
 
     # The `style` can be specified to pick a specific face.
-    style: Regular
+    #style: Regular
 
   # Bold font face
   bold:
@@ -122,10 +122,10 @@ font:
     #
     # If the bold family is not specified, it will fall back to the
     # value specified for the normal font.
-    family: SauceCodePro Nerd Font
+    family: monospace
 
     # The `style` can be specified to pick a specific face.
-    style: Bold
+    #style: Bold
 
   # Italic font face
   italic:
@@ -133,10 +133,10 @@ font:
     #
     # If the italic family is not specified, it will fall back to the
     # value specified for the normal font.
-    family: SauceCodePro Nerd Font
+    family: monospace
 
     # The `style` can be specified to pick a specific face.
-    style: Italic
+    #style: Italic
 
   # Bold italic font face
   bold_italic:
@@ -144,10 +144,10 @@ font:
     #
     # If the bold italic family is not specified, it will fall back to the
     # value specified for the normal font.
-    family: SauceCodePro Nerd Font
+    family: monospace
 
     # The `style` can be specified to pick a specific face.
-    style: Bold Italic
+    #style: Bold Italic
 
   # Point size
   size: 9.0
@@ -155,16 +155,16 @@ font:
   # Offset is the extra space around each character. `offset.y` can be thought
   # of as modifying the line spacing, and `offset.x` as modifying the letter
   # spacing.
-  offset:
-    x: 0
-    y: 0
+  #offset:
+  #  x: 0
+  #  y: 0
 
   # Glyph offset determines the locations of the glyphs within their cells with
   # the default being at the bottom. Increasing `x` moves the glyph to the
   # right, increasing `y` moves the glyph upward.
-  #glyph_offset:
-  #  x: 0
-  #  y: 0
+  glyph_offset:
+    x: 0
+    y: -1
 
   # Thin stroke font rendering (macOS only)
   #
@@ -173,7 +173,7 @@ font:
   #use_thin_strokes: true
 
 # If `true`, bold text is drawn using the bright color variants.
-draw_bold_text_with_bright_colors: true
+#draw_bold_text_with_bright_colors: false
 
 # Colors (Nord)
 colors:
@@ -225,7 +225,7 @@ colors:
     cyan: '#6d96a5'
     white: '#aeb3bb'
 
-# Colors (Tomorrow Night)
+#Colors (Tomorrow night)
 #colors:
   # Default colors
   #primary:
@@ -389,7 +389,7 @@ colors:
 #
 # Window opacity as a floating point number from `0.0` to `1.0`.
 # The value `0.0` is completely transparent and `1.0` is opaque.
-background_opacity: 1.0
+#background_opacity: 1.0
 
 #selection:
   # This string contains all characters that are used as separators for
@@ -399,16 +399,16 @@ background_opacity: 1.0
   # When set to `true`, selected text will be copied to the primary clipboard.
   #save_to_clipboard: false
 
-#cursor:
+cursor:
   # Cursor style
-  #style:
+  style:
     # Cursor shape
     #
     # Values for `shape`:
     #   - ▇ Block
     #   - _ Underline
     #   - | Beam
-    #shape: Block
+    shape: Underline
 
     # Cursor blinking state
     #
@@ -417,7 +417,7 @@ background_opacity: 1.0
     #   - Off: Disable blinking by default
     #   - On: Enable blinking by default
     #   - Always: Force the cursor to always blink
-    #blinking: Off
+    blinking: Always
 
   # Vi mode cursor style
   #
@@ -428,11 +428,11 @@ background_opacity: 1.0
   #vi_mode_style: None
 
   # Cursor blinking interval in milliseconds.
-  #blink_interval: 750
+  blink_interval: 750
 
   # If this is `true`, the cursor will be rendered as a hollow box when the
   # window is not focused.
-  #unfocused_hollow: true
+  unfocused_hollow: true
 
   # Thickness of the cursor relative to the cell width as floating point number
   # from `0.0` to `1.0`.
@@ -730,22 +730,15 @@ background_opacity: 1.0
 #
 # If the same trigger is assigned to multiple actions, all of them are executed
 # in the order they were defined in.
-key_bindings:
-  - { key: V,          mods: Control|Shift,              action: Paste            }
-  - { key: C,          mods: Control|Shift,              action: Copy             }
-  - { key: Key0,       mods: Control,                    action: ResetFontSize    }
-  - { key: Equals,     mods: Control,                    action: IncreaseFontSize }
-  - { key: Plus,       mods: Control,                    action: IncreaseFontSize }
-  - { key: Minus,      mods: Control,                    action: DecreaseFontSize }
-
-  - { key: Paste,                                       action: Paste          }
-  - { key: Copy,                                        action: Copy           }
-  - { key: L,         mods: Control,                    action: ClearLogNotice }
-  - { key: L,         mods: Control,                    chars: "\x0c"          }
-  - { key: PageUp,    mods: Shift,   mode: ~Alt,        action: ScrollPageUp,  }
-  - { key: PageDown,  mods: Shift,   mode: ~Alt,        action: ScrollPageDown }
-  - { key: Home,      mods: Shift,   mode: ~Alt,        action: ScrollToTop,   }
-  - { key: End,       mods: Shift,   mode: ~Alt,        action: ScrollToBottom }
+#key_bindings:
+  #- { key: Paste,                                       action: Paste          }
+  #- { key: Copy,                                        action: Copy           }
+  #- { key: L,         mods: Control,                    action: ClearLogNotice }
+  #- { key: L,         mods: Control, mode: ~Vi|~Search, chars: "\x0c"          }
+  #- { key: PageUp,    mods: Shift,   mode: ~Alt,        action: ScrollPageUp,  }
+  #- { key: PageDown,  mods: Shift,   mode: ~Alt,        action: ScrollPageDown }
+  #- { key: Home,      mods: Shift,   mode: ~Alt,        action: ScrollToTop,   }
+  #- { key: End,       mods: Shift,   mode: ~Alt,        action: ScrollToBottom }
 
   # Vi Mode
   #- { key: Space,  mods: Shift|Control, mode: Vi|~Search, action: ScrollToBottom          }
@@ -867,3 +860,4 @@ key_bindings:
 
   # Print all received window events.
   #print_events: false
+

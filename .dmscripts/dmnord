@@ -1,0 +1,101 @@
+#!/usr/bin/env bash
+
+# exit when any command fails
+set -e
+
+echoexit() {
+    # Print to stderr and exit
+    printf "%s\n" "$@" 1>&2
+    exit 1
+}
+
+# Checking dependencies:
+whereis nordvpn > /dev/null || echoexit "'nordvpn' not found."
+
+menu() {
+    dmenu -i -p "NordVPN:"
+}
+
+countries() {
+    # Country selection.
+    local choices
+    choices="$(nordvpn countries | tr -d '\r,-' | tr -s "[:blank:]" "\n" | sed '/^\s*$/d' | sort)"
+    printf "%s" "$choices" | menu
+}
+
+cities() {
+    # City selection.
+    local choices
+    choices="$(nordvpn cities "$1" | tr -d '\r,-' | tr -s "[:blank:]" "\n" | sed '/^\s*$/d' | sort)"
+    printf "%s" "$choices" | menu
+}
+
+connect_menu() {
+    local choices
+    local result
+    choices="Default\nCountries\nCities\np2p\nonion"
+    result=$(printf "%b" "$choices" | menu)
+
+    case "$result" in
+        "Default")
+            nordvpn connect
+	    ;;
+	"Countries")
+            country="$(countries)"
+	    [ -n country ] && nordvpn connect "$country"
+	    ;;
+	"Cities")
+            country="$(countries)"
+	    [ -n country ] && city="$(cities)"
+	    [ -n city ] && nordvpn connect "$country" "$city"
+	    ;;
+	"p2p")
+            nordvpn connect p2p
+	    ;;
+	"onion")
+            nordvpn connect onion_over_vpn
+	    ;;
+	*)
+            main_menu
+	    ;;
+    esac
+}
+
+vpn_status() {
+    local choices
+    choices="$(nordvpn status | tr -d '\r-' | sed 's/^ *//')"
+    printf "%s" "$choices" | menu
+}
+
+vpn_settings() {
+    local choices
+    choices="$(nordvpn settings | tr -d '\r-' | sed 's/^ *//')"
+    printf "%s" "$choices" | menu
+}
+
+main_menu() {
+    local choices
+    local result
+    choices="Connect\nDisconnect\nStatus\nSettings"
+    result=$(printf "%b" "$choices" | menu)
+
+    case "$result" in
+        "Connect")
+            connect_menu
+	    ;;
+        "Disconnect")
+            nordvpn disconnect
+	    ;;
+	"Status")
+            vpn_status
+	    ;;
+	"Settings")
+            vpn_settings
+	    ;;
+        *)
+            exit 0
+	;;
+    esac
+}
+
+main_menu

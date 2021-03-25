@@ -1,5 +1,7 @@
 #! /bin/bash
-lxsession &
 picom --experimental-backends &
-nitrogen --restore &
+dunst &
+unclutter &
+flashfocus &
 /usr/bin/emacs --daemon &
+thunar --daemon &

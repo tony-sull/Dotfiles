@@ -6,6 +6,8 @@ from libqtile.config import Click, Drag, Group, KeyChord, Key, Match, Screen
 from libqtile.lazy import lazy
 from libqtile.utils import guess_terminal
 from typing import List  # noqa: F401
+from custom.pomodoro import Pomodoro as CustomPomodoro
+from custom.windowname import WindowName as CustomWindowName
 
 mod = "mod4"                  # Sets mod key to SUPER/WINDOWS
 terminal = "alacritty"         # My terminal of choice
@@ -148,6 +150,10 @@ keys = [
         Key([], "s",
             lazy.spawn(dmscripts+"dmsearch"),
             desc="Search various search engines via dmenu"
+            ),
+        Key([], "v",
+            lazy.spawn(dmscripts+"dmnord"),
+            desc="Manage NordVPN connections"
             )
     ]),
     ### Thinkpad function keys
@@ -163,7 +169,7 @@ keys = [
     Key([], "XF86AudioRaiseVolume",
         lazy.spawn("amixer -D pulse set Master 5%+")
         ),
-    Key([mod], "XF86AudioLowerVolume",
+    Key([mod], "XF86AudioRaiseVolume",
         lazy.spawn("amixer -D pulse set Master 1%+")
         ),
     Key([], "XF86AudioMicMute",
@@ -183,29 +189,101 @@ keys = [
         )
 ]
 
-group_names = [("WWW", { "layout": "monadtall" }),
-               ("DEV", { "layout": "monadtall" }),
-               ("SYS", { "layout": "monadtall" }),
-               ("DOC", { "layout": "monadtall" }),
-               ("CHAT", { "layout": "monadtall" }),
-               ("GFX", { "layout": "floating" }),
-               ("ETC", { "layout": "monadtall" })]
+### Helper functions
+def update():
+    qtile.cmd_spawn(terminal + "-e yay")
 
-groups = [Group(name, **kwargs) for name, kwargs in group_names]
+def open_powermenu():
+    qtile.cmd_spawn(dmscripts + "dmlogout")
 
-for i, (name, kwargs) in enumerate(group_names, 1):
-    keys.extend([
-        Key([mod], str(i), lazy.group[name].toscreen(),
-            desc="Switch to Group {}".format(name)),
-        Key([mod, "shift"], str(i), lazy.window.togroup(name),
-            desc="Move focused window to group {}".format(name))
-    ])
+def nordvpn():
+    return (
+        subprocess.check_output(["./.config/qtile/get-nordvpn.sh"])
+        .decode("utf-8")
+        .strip()
+    )
 
-layout_theme = {"border_width": 2,
-                "margin": 8,
-                "border_focus": "e1acff",
-                "border_normal": "1D2330"
-                }
+def bluetooth():
+    return (
+        subprocess.check_output(["./.config/qtile/system-bluetooth-bluetoothctl.sh"])
+        .decode("utf-8")
+        .strip()
+    )
+
+def toggle_bluetooth():
+    qtile.cmd_spawn("./.config/qtile/system-bluetooth-bluetoothctl.sh --toggle")
+
+
+def open_bt_menu():
+    qtile.cmd_spawn("blueman-manager")
+
+def open_wifi_menu():
+    qtile.cmd_spawn("networkmanager_dmenu")
+
+# Define colors
+
+colors = [
+    ["#2e3440", "#2e3440"],  # 0  background
+    ["#d8dee9", "#d8dee9"],  # 1  foreground
+    ["#3b4252", "#3b4252"],  # 2  background lighter
+    ["#bf616a", "#bf616a"],  # 3  red
+    ["#a3be8c", "#a3be8c"],  # 4  green
+    ["#ebcb8b", "#ebcb8b"],  # 5  yellow
+    ["#81a1c1", "#81a1c1"],  # 6  blue
+    ["#b48ead", "#b48ead"],  # 7  magenta
+    ["#88c0d0", "#88c0d0"],  # 8  cyan
+    ["#e5e9f0", "#e5e9f0"],  # 9  white
+    ["#4c566a", "#4c566a"],  # 10 grey
+    ["#d08770", "#d08770"],  # 11 orange
+    ["#8fbcbb", "#8fbcbb"],  # 12 super cyan
+    ["#5e81ac", "#5e81ac"],  # 13 super blue
+    ["#242831", "#242831"],  # 14 super dark background
+]
+
+### Define groups and screens
+
+workspaces = [
+    { "name": "", "key": "1", "matches": [Match(wm_class="firefox")] },
+    { "name": "", "key": "2", "matches": [Match(wm_class="thunderbird")] },
+    { "name": "", "key": "3", "matches": [Match(wm_class="libreoffice"), Match(wm_class="org.pwmt.zathura")] },
+    { "name": "", "key": "4", "matches": [Match(wm_class="emacs"), Match(wm_class="code-oss")] },
+    { "name": "", "key": "5", "matches": [Match(wm_class="Alacritty")] },
+    { "name": "", "key": "6", "matches": [Match(wm_class="signal-desktop")] },
+    { "name": "", "key": "7", "matches": [Match(title="GNU Image Manipulation Program"), Match(wm_class="figma-linux")] },
+    { "name": "", "key": "8", "matches": [Match(wm_class="com.bitwarden.desktop")] }
+]
+
+groups = []
+
+for workspace in workspaces:
+    ws_matches = workspace["matches"] if "matches" in workspace else None
+    ws_layout = workspace["layout"] if "layout" in workspace else "monadtall"
+    groups.append(Group(workspace["name"], matches=ws_matches, layout=ws_layout))
+    keys.append(
+        Key(
+            [mod],
+            workspace["key"],
+            lazy.group[workspace["name"]].toscreen(),
+            desc="Focus this desktop",
+        )
+    )
+    keys.append(
+        Key(
+            [mod, "shift"],
+            workspace["key"],
+            lazy.window.togroup(workspace["name"]),
+            desc="Move focused window to another group",
+        )
+    )
+
+layout_theme = {
+    "border_width": 2,
+    "margin": 8,
+    "border_focus": colors[6][0].replace("#", ""),
+    "border_normal": colors[0][0].replace("#", ""),
+    "font": "FiraCode Nerd Font",
+    "grow_amount": 2
+}
 
 layouts = [
         layout.MonadTall(**layout_theme),
@@ -213,286 +291,247 @@ layouts = [
         layout.Tile(shift_windows=True, **layout_theme),
         layout.Stack(num_stacks=2),
         layout.TreeTab(
-            font = "Ubuntu Mono",
-            fontsize = 14,
+            **layout_theme,
+            fontsize = 16,
             sections = ["FIRST", "SECOND"],
-            section_fontsize = 12,
+            section_fontsize = 18,
+            section_fg = colors[1],
             bg_color = "2e3440",
-            active_bg = "5e81ac",
-            active_fg = "eceff4",
-            inactive_bg = "4c566a",
-            inactive_fg = "d8dee9",
-            padding_y = 5,
-            section_top = 16,
-            panel_width = 320
+            active_bg = colors[14],
+            active_fg = colors[1],
+            inactive_bg = colors[0],
+            inactive_fg = colors[1],
             ),
         layout.Floating(**layout_theme)
 ]
-
-colors = [["#2E3440", "#2E3440"], # panel background
-          ["#4c566a", "#4c566a"], # background for current screen tab
-          ["#eceff4", "#eceff4"], # font color for group names
-          ["#88c0d0", "#88c0d0"], # border line color for current tab
-          ["5e81ac", "#5e81ac"], # border line color for 'other tabs' and color for 'odd widgets'
-          ["#434c5e", "#434c5e"], # color for the 'even widgets'
-          ["#e1acff", "#e1acff"]] # window name
 
 prompt = "{0}@{1}".format(os.environ["USER"], socket.gethostname())
 
 ##### DEFAULT WIDGET SETTINGS #####
 widget_defaults = dict(
-    font='Ubuntu Mono',
-    fontsize=12,
-    padding=2,
-    background=colors[2]
+    font='FiraCode Nerd Font',
+    fontsize=18,
+    padding=3,
+    background=colors[0]
 )
 extension_defaults = widget_defaults.copy()
 
+def separator(padding, size_percent = 50):
+    return widget.Sep(
+        linewidth = 0,
+        foreground = colors[2],
+        background = colors[0],
+        padding = padding,
+        size_percent = size_percent
+    )
+
+def group_head():
+    return widget.TextBox(
+            text = "",
+            foreground = colors[14],
+            background = colors[0],
+            fontsize = 28,
+            padding = 0
+    )
+
+def group_tail():
+    return widget.TextBox(
+        text = "",
+        foreground = colors[14],
+        background = colors[0],
+        fontsize = 28,
+        padding = 0
+    )
+
+group_box_settings = {
+    "padding": 5,
+    "borderwidth": 4,
+    "active": colors[6],
+    "inactive": colors[10],
+    "disable_drag": True,
+    "rounded": True,
+    "highlight_color": colors[2],
+    "block_highlight_text_color": colors[1],
+    "highlight_method": "block",
+    "this_current_screen_border": colors[14],
+    "this_screen_border": colors[7],
+    "other_current_screen_border": colors[14],
+    "other_screen_border": colors[14],
+    "foreground": colors[1],
+    "background": colors[14],
+    "urgent_border": colors[3],
+    "fontsize": 24,
+    "font": "Font Awesome 5 Brands",
+}
+
 def init_widgets_list():
     widgets_list = [
-        widget.Spacer(
-            length = 6,
-            background = colors[0]
-            ),
+        separator(20, 40),
+        group_head(),
+#        widget.GroupBox(**group_box_settings),
+        widget.GroupBox(
+            visible_groups = [""],
+            **group_box_settings
+        ),
+        widget.GroupBox(
+            visible_groups = ["", "", "", "", ""],
+            **group_box_settings
+        ),
+        widget.GroupBox(
+            visible_groups = ["", ""],
+            **group_box_settings
+        ),
+        group_tail(),
+        separator(10),
+        group_head(),
         widget.CurrentLayoutIcon(
             custom_icon_paths = [os.path.expanduser("~/.config/qtile/icons")],
             foreground = colors[2],
-            background = colors[0],
-            padding = 0,
-            scale = 0.7
-            ),
-        widget.Spacer(
-            length = 6,
-            background = colors[0]
-            ),
-        widget.GroupBox(
-            font = "Ubuntu Bold",
-            fontsize = 9,
-            margin_y = 3,
-            margin_x = 0,
-            padding_y = 5,
-            padding_x = 3,
-            borderwidth = 3,
-            active = colors[2],
-            inactive = colors[2],
-            rounded = False,
-            highlight_color = colors[1],
-            highlight_method = "line",
-            this_current_screen_border = colors[3],
-            this_screen_border = colors[4],
-            other_current_screen_border = colors[6],
-            other_screen_border = colors[4],
-            foreground = colors[2],
-            background = colors[0]
-            ),
-        widget.Prompt(
-            prompt = prompt,
-            font = "Ubuntu Mono",
-            padding = 10,
-            foreground = colors[3],
-            background = colors[1]
-            ),
-        widget.Spacer(
-            background = colors[0],
-            length = bar.STRETCH
+            background = colors[14],
+            padding = -2,
+            scale = 0.55
         ),
-        widget.Systray(
+        group_tail(),
+        separator(10),
+        widget.CheckUpdates(
             background = colors[0],
+            foreground = colors[3],
+            fontsize = 16,
+            update_interval = 1800,
+            distro = "Arch_checkupdates",
+            display_format = "⟳ {updates} Updates",
+            mouse_callbacks = {"Button1": lambda: qtile.cmd_spawn(terminal+" -e sudo pacman -Syu")},
             padding = 5
-            ),
+        ),
+        widget.Spacer(),
+        group_head(),
+        CustomPomodoro(
+            background=colors[14],
+            fontsize=26,
+            color_active=colors[3],
+            color_break=colors[6],
+            color_inactive=colors[10],
+            timer_visible=False,
+            prefix_active="",
+            prefix_break="",
+            prefix_inactive="",
+            prefix_long_break="",
+            prefix_paused=""
+        ),
+        group_tail(),
+        separator(10),
+        group_head(),
         widget.TextBox(
-            text = "",
-            background = colors[0],
-            foreground = colors[5],
-            padding = 0,
-            fontsize = 37
-            ),
-        widget.TextBox(
-            text = "",
-            background = colors[5],
-            foreground = colors[2],
-            ),
-        widget.Wlan(
-            foreground = colors[2],
-            background = colors[5],
-            format = "{essid} ({percent:0.0%})",
-            padding = 5
-            ),
-        widget.TextBox(
-            text = '',
-            background = colors[5],
-            foreground = colors[4],
-            padding = 0,
-            fontsize = 37
-            ),
-        widget.Net(
-            interface = "wlan0",
-            format = "{down} ↓↑{up}",
-            foreground = colors[2],
-            background = colors[4],
-            padding = 5
-            ),
-        widget.TextBox(
-            text = "",
-            background = colors[4],
-            foreground = colors[5],
-            padding = 0,
-            fontsize = 37
-            ),
+            text = " ",
+            foreground = colors[8],
+            background = colors[14],
+            font = "Font Awesome 5 Free Solid",
+            fontsize = 20
+        ),
         widget.Volume(
-            background = colors[5],
-            foreground = colors[2],
-            emoji = True,
-            device = "pulse"
-            ),
-        widget.Volume(
-            background = colors[5],
-            foreground = colors[2],
+            background = colors[14],
+            foreground = colors[8],
+            fontsize = 16,
             device = "pulse",
             padding = 5
             ),
-        widget.TextBox(
-            text = "",
-            background = colors[5],
-            foreground = colors[4],
-            padding = 0,
-            fontsize = 37
-            ),
-        widget.TextBox(
-            text = "",
-            padding = 2,
-            foreground = colors[2],
-            background = colors[4],
-            fontsize = 11
-            ),
-        widget.Backlight(
-            background = colors[4],
-            foreground = colors[2],
-            backlight_name = "amdgpu_bl0",
-            padding = 5
-            ),
-        widget.TextBox(
-            text = "",
-            background = colors[4],
-            foreground = colors[5],
-            padding = 0,
-            fontsize = 37
-            ),
-        widget.TextBox(
-            text = "🖬",
-            foreground = colors[2],
-            background = colors[5],
-            padding = 0,
-            fontsize = 14
-            ),
-        widget.Memory(
-            foreground = colors[2],
-            background = colors[5],
-            measure_mem = "G",
-            measure_swap = "G",
-            format = "{MemPercent: .0f}%",
-            mouse_callbacks = { "Button1": lambda: qtile.cmd_spawn(terminal + " -e htop")},
-            padding = 5
-            ),
-        widget.TextBox(
-            text = "",
-            background = colors[5],
-            foreground = colors[4],
-            padding = 0,
-            fontsize = 37
-            ),
-        widget.TextBox(
-            text = "",
-            foreground = colors[2],
-            background = colors[4],
-            padding = 5
-            ),
-        widget.CPU(
-            foreground = colors[2],
-            background = colors[4],
+        group_tail(),
+        separator(10),
+        group_head(),
+        widget.GenPollText(
+            func = bluetooth,
+            background = colors[14],
+            foreground = colors[6],
+            fontsize = 16,
+            update_interval = 3,
+            mouse_callbacks = {
+                "Button1": toggle_bluetooth,
+                "Button3": open_bt_menu
+            }
+        ),
+        group_tail(),
+        separator(10),
+        group_head(),
+        widget.Wlan(
+            foreground = colors[7],
+            background = colors[14],
+            fontsize = 16,
+            format = "  {essid}",
             padding = 5,
-            format = "{load_percent}%"
-            ),
-        widget.TextBox(
-            text = "",
-            background = colors[4],
-            foreground = colors[5],
-            padding = 0,
-            fontsize = 37
-            ),
-        widget.TextBox(
-            text = "🌡",
-            padding = 2,
-            foreground = colors[2],
-            background = colors[5],
-            fontsize = 11
-            ),
-        widget.ThermalSensor(
-            foreground = colors[2],
-            background = colors[5],
-            threshold = 90,
-            padding = 5
-            ),
-        widget.TextBox(
-            text = "",
-            background = colors[5],
-            foreground = colors[4],
-            padding = 0,
-            fontsize = 37
-            ),
+            mouse_callbacks = { "Button1": open_wifi_menu }
+        ),
+        group_tail(),
+        separator(10),
+        group_head(),
+        widget.GenPollText(
+            func = nordvpn,
+            background = colors[14],
+            foreground = colors[11],
+            fontsize = 16,
+            update_interval = 3,
+            mouse_callbacks = {
+                "Button1": toggle_bluetooth,
+                "Button3": open_bt_menu
+            }
+        ),
+        group_tail(),
+        separator(10),
+        group_head(),
+        widget.Clock(
+            fontsize = 16,
+            format = "  %a, %b %d",
+            background = colors[14],
+            foreground = colors[5]
+        ),
+        group_tail(),
+        separator(10),
+        group_head(),
+        widget.Clock(
+            fontsize = 16,
+            format = "  %I:%M %p",
+            background = colors[14],
+            foreground = colors[4]
+        ),
+        group_tail(),
+        separator(10),
+        group_head(),
         widget.Battery(
-            background = colors[4],
-            foreground = colors[2],
-            charge_char = "",
+            background = colors[14],
+            foreground = colors[8],
+            fontsize = 16,
+            low_foreground = colors[3],
+            low_percentage = 0.15,
+            charge_char = "",
             discharge_char = "",
             emtpy_char = "",
-            format = "{char} {percent:3.0%} ({hour:d}:{min:02d})",
+            format = "{char}  {percent:3.0%} ({hour:d}:{min:02d})",
             padding = 5
-            ),
+        ),
+        group_tail(),
+        separator(20),
         widget.TextBox(
-            text = "",
-            background = colors[4],
-            foreground = colors[5],
-            padding = 0,
-            fontsize = 37
-            ),
-        widget.TextBox(
-            text = "⟳",
-            padding = 2,
-            foreground = colors[2],
-            background = colors[5],
-            fontsize = 14
-            ),
-        widget.CheckUpdates(
-            update_interval = 1800,
-            distro = "Arch_checkupdates",
-            display_format = "{updates} Updates",
-            no_update_string = "0 Updates",
-            foreground = colors[2],
-            mouse_callbacks = {"Button1": lambda: qtile.cmd_spawn(terminal+" -e sudo pacman -Syu")},
-            background = colors[5],
-            padding = 5
-            ),
-        widget.TextBox(
-            text = "",
-            background = colors[5],
-            foreground = colors[4],
-            padding = 0,
-            fontsize = 37
-            ),
-        widget.Clock(
-            foreground = colors[2],
-            background = colors[4],
-            format = "%a, %b %d | %I:%M %p",
-            padding = 5
-            )
+            text = "⏻",
+            foreground = colors[13],
+            background = colors[0],
+            font = "Font Awesome 5 Free Solid",
+            fontsize = 30,
+            mouse_callbacks = { "Button1": open_powermenu }
+        ),
+        separator(20)
         ]
     return widgets_list
 
 def init_screens():
     return [
-        Screen(top=bar.Bar(widgets=init_widgets_list(), opacity=1.0, size=20))
-        ]
+        Screen(
+            wallpaper = "~/Git/Personal/Dotfiles/backgrounds/dnord4k_dark.png",
+            wallpaper_mode = "fill",
+            top = bar.Bar(
+                widgets = init_widgets_list(),
+                size = 34,
+            ),
+        )
+    ]
 
 if __name__ in ["config", "__main__"]:
     screens = init_screens()
@@ -531,6 +570,18 @@ def start_once():
     home = os.path.expanduser("~")
     subprocess.call([home + "/.config/qtile/autostart.sh"])
 
+# Go to group when app opens on matched gropu
+@hook.subscribe.client_new
+def modify_window(client):
+    for group in groups:  # follow on auto-move
+        match = next((m for m in group.matches if m.compare(client)), None)
+        if match:
+            targetgroup = client.qtile.groups_map[
+                group.name
+            ]  # there can be multiple instances of a group
+            targetgroup.cmd_toscreen(toggle=False)
+            break
+
 # XXX: Gasp! We're lying here. In fact, nobody really uses or cares about this
 # string besides java UI toolkits; you can see several discussions on the
 # mailing lists, GitHub issues, and other WM documentation that suggest setting
@@ -539,4 +590,4 @@ def start_once():
 #
 # We choose LG3D to maximize irony: it is a 3D non-reparenting WM written in
 # java that happens to be on java's whitelist.
-wmname = "LG3D"
+wmname = "qtile"
