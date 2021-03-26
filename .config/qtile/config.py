@@ -220,6 +220,9 @@ def open_bt_menu():
 def open_wifi_menu():
     qtile.cmd_spawn("networkmanager_dmenu")
 
+def open_vpn_menu():
+    qtile.cmd_spawn(dmscripts+"dmnord")
+
 # Define colors
 
 colors = [
@@ -470,8 +473,7 @@ def init_widgets_list():
             fontsize = 16,
             update_interval = 3,
             mouse_callbacks = {
-                "Button1": toggle_bluetooth,
-                "Button3": open_bt_menu
+                "Button1": open_vpn_menu
             }
         ),
         group_tail(),
