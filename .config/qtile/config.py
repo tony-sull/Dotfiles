@@ -251,7 +251,7 @@ workspaces = [
     { "name": "", "key": "3", "matches": [Match(wm_class="libreoffice"), Match(wm_class="org.pwmt.zathura")] },
     { "name": "", "key": "4", "matches": [Match(wm_class="emacs"), Match(wm_class="code-oss")] },
     { "name": "", "key": "5", "matches": [Match(wm_class="Alacritty")] },
-    { "name": "", "key": "6", "matches": [Match(wm_class="signal-desktop")] },
+    { "name": "", "key": "6", "matches": [Match(wm_class="signal-desktop"), Match(wm_class="discord")] },
     { "name": "", "key": "7", "matches": [Match(title="GNU Image Manipulation Program"), Match(wm_class="figma-linux")] },
     { "name": "", "key": "8", "matches": [Match(wm_class="com.bitwarden.desktop")] }
 ]
